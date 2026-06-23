@@ -458,3 +458,101 @@ Esse volume será utilizado para avaliar:
 A quantidade de páginas e anúncios pode mudar ao longo do tempo, pois novas vagas podem ser publicadas e anúncios antigos podem ser removidos.
 
 Dessa forma, o resultado de 748 URLs representa um recorte da plataforma na data de execução do teste.
+
+## 17. Coleta ampliada de 20 páginas
+
+Após a validação da coleta-piloto, foi realizada uma coleta ampliada das primeiras 20 páginas da ProgramaThor.
+
+### Arquivo utilizado
+
+`src/coleta/06_coletar_amostra_ampliada_programathor.py`
+
+### Arquivo gerado
+
+`data/samples/programathor_coleta_20_paginas.csv`
+
+### Resultado
+
+* páginas percorridas: 20;
+* URLs únicas encontradas: 298;
+* vagas coletadas com sucesso: 296;
+* vagas indisponíveis: 2;
+* URLs duplicadas: 0;
+* taxa de sucesso: 99,33%.
+
+O total teórico para 20 páginas com 15 anúncios seria de 300 vagas. Entretanto, foram encontradas 298 URLs únicas. Essa diferença pode estar relacionada a páginas com menos de 15 anúncios ou à repetição de URLs entre páginas, removidas automaticamente pelo coletor.
+
+### Vagas indisponíveis
+
+Duas URLs retornaram erro HTTP 500:
+
+* `https://www.programathor.com.br/jobs/31930-engenheiro-a-backend-senior`
+* `https://www.programathor.com.br/jobs/31809-desenvolvedor-a-backend-javascript-node-js-jr`
+
+As ocorrências foram preservadas na base contendo a URL e a mensagem de erro. Esses registros não foram utilizados na preparação da base textual.
+
+---
+
+## 18. Validação estrutural da coleta ampliada
+
+A base ampliada foi validada por meio do arquivo:
+
+`src/analise/03_validar_coleta_ampliada_programathor.py`
+
+### Resultado
+
+* total de registros: 298;
+* vagas válidas: 296;
+* vagas indisponíveis: 2;
+* URLs duplicadas: 0;
+* campos obrigatórios vazios nas vagas válidas: 0;
+* salários não especificados: 173;
+* percentual de vagas sem salário informado: 58,45%;
+* taxa de sucesso da coleta: 99,33%.
+
+Quatro vagas apresentaram textos de requisitos com menos de 50 caracteres. As páginas originais foram verificadas manualmente e confirmou-se que os anúncios realmente possuíam descrições curtas. Portanto, essas vagas foram mantidas como registros válidos.
+
+O critério de 50 caracteres foi utilizado apenas como alerta para conferência manual, e não como regra automática de exclusão.
+
+---
+
+## 19. Preparação da base textual ampliada
+
+Após a validação, foi criada uma base processada contendo somente as 296 vagas válidas.
+
+### Arquivo utilizado
+
+`src/limpeza/02_preparar_base_ampliada.py`
+
+### Arquivo gerado
+
+`data/processed/programathor_vagas_processadas_20_paginas.csv`
+
+### Transformações realizadas
+
+* remoção das duas linhas com erro;
+* verificação de URLs duplicadas;
+* padronização de espaços, tabulações e quebras de linha;
+* criação da coluna `skills_plataforma`;
+* criação da coluna `texto_analise`;
+* criação da coluna `tamanho_texto_analise`;
+* remoção das colunas redundantes `skills` e `erro`;
+* reorganização do índice.
+
+O campo `texto_analise` foi criado pela combinação de:
+
+* título;
+* skills disponibilizadas pela plataforma;
+* atividades;
+* requisitos.
+
+### Resultado da base processada
+
+* vagas processadas: 296;
+* colunas: 18;
+* URLs duplicadas: 0;
+* menor texto de análise: 151 caracteres;
+* tamanho médio dos textos: aproximadamente 1.533 caracteres;
+* maior texto de análise: 4.954 caracteres.
+
+A base processada será utilizada nas etapas de definição das categorias, rotulagem manual, classificação de vagas e extração de competências.

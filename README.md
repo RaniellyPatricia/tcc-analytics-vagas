@@ -8,7 +8,7 @@ A proposta geral é analisar a relação entre:
 * trajetória profissional dos egressos;
 * competências previstas no Projeto Pedagógico do Curso e na matriz curricular.
 
-O projeto está sendo desenvolvido em etapas. A fase atual concentra-se na coleta, organização, validação e análise de anúncios de vagas de tecnologia publicados no Brasil.
+O projeto está sendo desenvolvido em etapas. A fase atual concentra-se na coleta, organização, validação, preparação textual e classificação de anúncios de vagas de tecnologia publicados no Brasil.
 
 ---
 
@@ -22,7 +22,7 @@ Os resultados deverão apoiar a coordenação do curso por meio de indicadores r
 * competências técnicas;
 * competências comportamentais;
 * tecnologias mencionadas nas vagas;
-* trajetória dos egressos;
+* trajetória profissional dos egressos;
 * aderência entre currículo e mercado;
 * possíveis oportunidades de atualização curricular.
 
@@ -60,7 +60,7 @@ As atividades desta fase incluem:
 9. avaliar métricas;
 10. extrair competências dos anúncios.
 
-O uso de Machine Learning será realizado somente após a construção de uma base rotulada com quantidade e qualidade suficientes para uma avaliação minimamente defensável.
+O uso de Machine Learning será realizado somente após a construção de uma base rotulada com quantidade, diversidade e qualidade suficientes para uma avaliação minimamente defensável.
 
 ---
 
@@ -72,9 +72,20 @@ A primeira fonte utilizada foi a ProgramaThor:
 
 A coleta foi realizada por meio de scripts em Python, utilizando requisições HTTP e extração de informações do HTML.
 
-Até o momento, foram analisadas as três primeiras páginas da listagem.
+Inicialmente, foram analisadas as três primeiras páginas da listagem para validar:
 
-A quantidade total de páginas disponíveis na plataforma ainda não foi determinada.
+* acesso à plataforma;
+* funcionamento da paginação;
+* extração dos campos;
+* tratamento de erros;
+* armazenamento em CSV;
+* qualidade estrutural dos dados.
+
+Posteriormente, foi realizado um teste de extensão da paginação nas primeiras 50 páginas.
+
+Esse teste identificou 748 URLs únicas. Como a página 50 ainda apresentava anúncios novos, a última página real da plataforma não foi determinada.
+
+Por questão de escopo e viabilidade, a coleta detalhada foi ampliada de forma controlada para as primeiras 20 páginas.
 
 ---
 
@@ -97,15 +108,64 @@ As três vagas indisponíveis retornaram erro HTTP 500.
 
 As respectivas URLs também foram testadas manualmente no navegador e permaneceram inacessíveis, indicando falha na própria fonte.
 
-Os resultados representam apenas a amostra coletada e não devem ser generalizados para todo o mercado brasileiro de tecnologia.
+A coleta-piloto foi utilizada para validar o fluxo completo antes da ampliação da base.
+
+---
+
+## Teste de extensão da paginação
+
+Foi realizado um teste nas primeiras 50 páginas da ProgramaThor para avaliar o volume de anúncios disponível.
+
+| Indicador                        | Resultado |
+| -------------------------------- | --------: |
+| Páginas testadas                 |        50 |
+| URLs únicas encontradas          |       748 |
+| Página 50 apresentou vagas novas |       Sim |
+| Última página real identificada  |       Não |
+
+O teste foi encerrado pelo limite de segurança definido no script, e não pela ausência de novos anúncios.
+
+Portanto, é possível afirmar apenas que, no momento do teste, a plataforma possuía pelo menos 50 páginas acessíveis e 748 URLs únicas nas páginas examinadas.
+
+Esse resultado representa um recorte temporal, pois os anúncios podem ser publicados, alterados ou removidos ao longo do tempo.
+
+---
+
+## Coleta ampliada de 20 páginas
+
+Após a validação da coleta-piloto, foi realizada uma coleta detalhada das primeiras 20 páginas da ProgramaThor.
+
+| Indicador                        | Resultado |
+| -------------------------------- | --------: |
+| Páginas percorridas              |        20 |
+| URLs únicas encontradas          |       298 |
+| Vagas coletadas com sucesso      |       296 |
+| Vagas indisponíveis              |         2 |
+| URLs duplicadas                  |         0 |
+| Taxa de sucesso                  |    99,33% |
+| Salários não especificados       |       173 |
+| Percentual sem salário informado |    58,45% |
+
+As duas vagas indisponíveis retornaram erro HTTP 500 da própria plataforma.
+
+As ocorrências foram preservadas no arquivo original contendo:
+
+* URL;
+* data de coleta;
+* fonte;
+* mensagem de erro.
+
+Os demais campos permaneceram vazios porque o conteúdo dos anúncios não estava disponível.
+
+Os registros com erro não foram utilizados na base processada.
 
 ---
 
 ## Validação da coleta
 
-A qualidade da coleta foi avaliada em duas etapas.
+A qualidade da coleta foi avaliada por meio de validação estrutural e conferência manual.
 
-### Validação estrutural
+### Validação estrutural da coleta-piloto
 
 Foram verificados:
 
@@ -118,11 +178,13 @@ Foram verificados:
 * salários não especificados;
 * taxa de sucesso.
 
-Nas 42 vagas válidas não foram identificados problemas estruturais.
+Nas 42 vagas válidas da coleta-piloto não foram identificados problemas estruturais.
 
-### Validação qualitativa
+### Validação qualitativa da coleta-piloto
 
-Foi selecionada uma amostra reproduzível de oito vagas utilizando `random_state=42`.
+Foi selecionada uma amostra reproduzível de oito vagas utilizando:
+
+`random_state=42`
 
 Os campos armazenados foram comparados manualmente com as páginas originais dos anúncios.
 
@@ -140,7 +202,26 @@ Foram conferidos:
 
 Não foram observadas divergências relevantes na amostra conferida.
 
-A coluna `skills` representa somente as etiquetas disponibilizadas pela plataforma. Outras competências presentes nos textos serão extraídas em uma etapa posterior.
+A coluna `skills` representa apenas as etiquetas disponibilizadas pela plataforma. Outras competências aparecem nos textos de atividades e requisitos.
+
+### Validação estrutural da coleta ampliada
+
+A base de 298 URLs também foi submetida à validação estrutural.
+
+Resultados:
+
+* 296 vagas válidas;
+* 2 vagas indisponíveis;
+* 0 URLs duplicadas;
+* 0 campos obrigatórios vazios nas vagas válidas;
+* taxa de sucesso de 99,33%;
+* 173 vagas sem salário especificado.
+
+Quatro anúncios apresentaram requisitos com menos de 50 caracteres.
+
+As páginas originais foram verificadas manualmente e confirmou-se que os textos eram realmente curtos. Portanto, esses registros foram mantidos como válidos.
+
+O limite de 50 caracteres foi utilizado apenas como alerta para conferência, e não como regra automática de exclusão.
 
 ---
 
@@ -168,16 +249,58 @@ Cada anúncio pode conter os seguintes campos:
 
 ---
 
+## Base textual processada
+
+As 296 vagas válidas da coleta ampliada foram preparadas para as etapas de análise, extração de competências e classificação.
+
+O processamento incluiu:
+
+* remoção dos registros com erro;
+* verificação de URLs duplicadas;
+* padronização de espaços;
+* padronização de quebras de linha e tabulações;
+* criação da coluna `skills_plataforma`;
+* criação da coluna `texto_analise`;
+* criação da coluna `tamanho_texto_analise`;
+* remoção das colunas redundantes `skills` e `erro`;
+* reorganização do índice.
+
+O campo `texto_analise` foi formado pela combinação de:
+
+```text
+titulo + skills_plataforma + atividades + requisitos
+```
+
+Resultados da base processada:
+
+| Indicador              |                        Resultado |
+| ---------------------- | -------------------------------: |
+| Vagas processadas      |                              296 |
+| Colunas                |                               18 |
+| URLs duplicadas        |                                0 |
+| Menor texto de análise |                   151 caracteres |
+| Tamanho médio          | aproximadamente 1.533 caracteres |
+| Maior texto de análise |                 4.954 caracteres |
+
+Arquivo gerado:
+
+`data/processed/programathor_vagas_processadas_20_paginas.csv`
+
+---
+
 ## Estrutura do projeto
 
 ```text
 TCC-analytics-vagas/
 ├── data/
 │   ├── processed/
+│   │   ├── programathor_vagas_processadas.csv
+│   │   └── programathor_vagas_processadas_20_paginas.csv
 │   ├── raw/
 │   └── samples/
 │       ├── programathor_amostra_15_vagas.csv
 │       ├── programathor_amostra_45_vagas.csv
+│       ├── programathor_coleta_20_paginas.csv
 │       └── validacao_qualitativa_8_vagas.csv
 ├── docs/
 │   └── diario_coleta.md
@@ -188,19 +311,26 @@ TCC-analytics-vagas/
 ├── src/
 │   ├── analise/
 │   │   ├── 01_validar_base_programathor.py
-│   │   └── 02_preparar_validacao_qualitativa.py
+│   │   ├── 02_preparar_validacao_qualitativa.py
+│   │   └── 03_validar_coleta_ampliada_programathor.py
 │   ├── coleta/
 │   │   ├── 01_teste_acesso_programathor.py
 │   │   ├── 02_coletar_amostra_programathor.py
 │   │   ├── 03_teste_paginacao_programathor.py
-│   │   └── 04_coletar_multiplas_paginas_programathor.py
+│   │   ├── 04_coletar_multiplas_paginas_programathor.py
+│   │   ├── 05_descobrir_ultima_pagina_programathor.py
+│   │   └── 06_coletar_amostra_ampliada_programathor.py
 │   └── limpeza/
+│       ├── 01_preparar_base_textual.py
+│       └── 02_preparar_base_ampliada.py
 ├── .gitignore
 ├── README.md
 └── requirements.txt
 ```
 
-As pastas `data/processed`, `data/raw`, `notebooks`, `outputs` e `src/limpeza` ainda poderão estar vazias enquanto suas respectivas etapas não forem iniciadas.
+As pastas `data/raw`, `notebooks` e `outputs` poderão permanecer vazias enquanto suas respectivas etapas não forem iniciadas.
+
+As pastas `data/processed` e `src/limpeza` já são utilizadas na preparação das bases textuais.
 
 ---
 
@@ -257,9 +387,42 @@ O script:
 
 ---
 
+### `05_descobrir_ultima_pagina_programathor.py`
+
+Percorre sucessivamente as páginas da listagem e compara os links encontrados com as URLs já identificadas.
+
+O script é encerrado quando:
+
+* uma página não apresenta vagas;
+* uma página contém apenas URLs já vistas;
+* ocorre um erro de acesso;
+* o limite de segurança é alcançado.
+
+No teste realizado, foram percorridas 50 páginas e identificadas 748 URLs únicas.
+
+A última página real da plataforma não foi alcançada.
+
+---
+
+### `06_coletar_amostra_ampliada_programathor.py`
+
+Realiza a coleta detalhada das primeiras 20 páginas da ProgramaThor.
+
+O script:
+
+* reúne os links das páginas;
+* remove URLs repetidas;
+* acessa cada anúncio;
+* extrai os campos estruturados;
+* registra falhas;
+* mantém intervalo entre as requisições;
+* salva a base ampliada em CSV.
+
+---
+
 ### `01_validar_base_programathor.py`
 
-Realiza a validação estrutural da base ampliada.
+Realiza a validação estrutural da coleta-piloto.
 
 Verifica:
 
@@ -289,6 +452,54 @@ A comparação considera:
 * skills;
 * atividades;
 * requisitos.
+
+---
+
+### `03_validar_coleta_ampliada_programathor.py`
+
+Valida a base de 298 URLs da coleta ampliada.
+
+Verifica:
+
+* quantidade de vagas válidas;
+* registros indisponíveis;
+* valores vazios;
+* URLs duplicadas;
+* salários não especificados;
+* requisitos curtos;
+* taxa de sucesso.
+
+---
+
+### `01_preparar_base_textual.py`
+
+Prepara a base-piloto de 42 vagas válidas.
+
+O script:
+
+* remove registros com erro;
+* verifica duplicidades;
+* padroniza os textos;
+* cria `skills_plataforma`;
+* cria `texto_analise`;
+* calcula o tamanho dos textos;
+* salva a base processada.
+
+---
+
+### `02_preparar_base_ampliada.py`
+
+Prepara as 296 vagas válidas da coleta ampliada.
+
+O script:
+
+* remove registros com erro;
+* remove possíveis duplicidades;
+* padroniza os textos;
+* cria `skills_plataforma`;
+* cria `texto_analise`;
+* calcula o tamanho dos textos;
+* salva a base processada com 18 colunas.
 
 ---
 
@@ -348,19 +559,31 @@ python src/coleta/01_teste_acesso_programathor.py
 python src/coleta/02_coletar_amostra_programathor.py
 ```
 
-### Testar a paginação
+### Testar a paginação inicial
 
 ```powershell
 python src/coleta/03_teste_paginacao_programathor.py
 ```
 
-### Coletar múltiplas páginas
+### Coletar as três primeiras páginas
 
 ```powershell
 python src/coleta/04_coletar_multiplas_paginas_programathor.py
 ```
 
-### Validar a base coletada
+### Testar a extensão da paginação
+
+```powershell
+python src/coleta/05_descobrir_ultima_pagina_programathor.py
+```
+
+### Realizar a coleta ampliada
+
+```powershell
+python src/coleta/06_coletar_amostra_ampliada_programathor.py
+```
+
+### Validar a coleta-piloto
 
 ```powershell
 python src/analise/01_validar_base_programathor.py
@@ -372,15 +595,43 @@ python src/analise/01_validar_base_programathor.py
 python src/analise/02_preparar_validacao_qualitativa.py
 ```
 
-### Atenção
+### Validar a coleta ampliada
+
+```powershell
+python src/analise/03_validar_coleta_ampliada_programathor.py
+```
+
+### Preparar a base-piloto
+
+```powershell
+python src/limpeza/01_preparar_base_textual.py
+```
+
+### Preparar a base ampliada
+
+```powershell
+python src/limpeza/02_preparar_base_ampliada.py
+```
+
+---
+
+## Atenção sobre a reprodução dos dados
+
+Os anúncios disponíveis na plataforma podem mudar ao longo do tempo.
+
+Uma nova execução pode produzir resultados diferentes das bases armazenadas no projeto porque:
+
+* novas vagas podem ser publicadas;
+* anúncios podem ser removidos;
+* anúncios podem mudar de posição entre as páginas;
+* páginas individuais podem ficar indisponíveis;
+* campos do site podem ser modificados.
 
 O script de preparação da validação qualitativa recria o arquivo:
 
 `data/samples/validacao_qualitativa_8_vagas.csv`
 
-Após o preenchimento manual, ele não deve ser executado novamente sem que seja criada uma cópia de segurança, pois as respostas poderão ser substituídas.
-
-Os anúncios disponíveis na plataforma podem mudar ao longo do tempo. Dessa forma, novas execuções podem produzir resultados diferentes da amostra armazenada.
+Após o preenchimento manual, ele não deve ser executado novamente sem a criação de uma cópia de segurança.
 
 ---
 
@@ -452,7 +703,7 @@ Essas categorias ainda deverão ser transformadas em um protocolo de rotulagem c
 
 ## Estratégia prevista para competências
 
-A coluna `skills` contém somente as etiquetas apresentadas pela ProgramaThor.
+A coluna `skills_plataforma` contém apenas as etiquetas apresentadas pela ProgramaThor.
 
 A extração completa de competências deverá considerar:
 
@@ -461,16 +712,16 @@ A extração completa de competências deverá considerar:
 * atividades;
 * requisitos.
 
-Posteriormente poderá ser criado um campo como:
+Foi criado o campo:
 
 ```text
-texto_analise = titulo + skills + atividades + requisitos
+texto_analise = titulo + skills_plataforma + atividades + requisitos
 ```
 
-Esse texto poderá ser utilizado em:
+Esse texto será utilizado em:
 
 * análise de frequência;
-* dicionário de competências;
+* construção de um dicionário de competências;
 * mineração de texto;
 * TF-IDF;
 * classificação de vagas.
@@ -481,16 +732,17 @@ Esse texto poderá ser utilizado em:
 
 A etapa atual possui as seguintes limitações:
 
-* coleta restrita às três primeiras páginas;
 * utilização de uma única plataforma;
-* quantidade total de páginas ainda desconhecida;
-* amostra pequena para treinamento de Machine Learning;
+* coleta detalhada restrita às primeiras 20 páginas;
+* última página real da ProgramaThor ainda não identificada;
 * possibilidade de alteração ou remoção dos anúncios;
 * existência de páginas listadas, mas indisponíveis;
-* possível viés relacionado ao perfil da ProgramaThor;
+* possível viés relacionado ao perfil de vagas da ProgramaThor;
 * validação qualitativa restrita a oito vagas;
-* ausência de uma base rotulada manualmente;
+* ausência de uma base completamente rotulada;
+* distribuição das categorias ainda não avaliada;
 * competências textuais ainda não extraídas;
+* viabilidade do Machine Learning ainda dependente da quantidade de exemplos por categoria;
 * ausência de integração com dados de egressos e currículo.
 
 ---
@@ -507,6 +759,8 @@ A coleta deve:
 * preservar falhas;
 * manter rastreabilidade;
 * evitar o preenchimento artificial de dados ausentes.
+
+Os resultados da ProgramaThor não representam automaticamente todo o mercado brasileiro de tecnologia.
 
 Nas etapas envolvendo egressos deverão ser considerados:
 
@@ -526,29 +780,38 @@ Nas etapas envolvendo egressos deverão ser considerados:
 * publicação no GitHub;
 * teste de acesso à ProgramaThor;
 * coleta inicial de 15 vagas;
-* teste de paginação;
-* coleta ampliada de 45 URLs;
+* teste de paginação das três primeiras páginas;
+* coleta-piloto de 45 URLs;
 * identificação de 42 vagas válidas;
-* registro de três páginas indisponíveis;
-* validação estrutural;
+* validação estrutural da coleta-piloto;
 * validação qualitativa de oito vagas;
-* criação do diário de coleta;
+* preparação da base textual de 42 vagas;
+* teste de extensão em 50 páginas;
+* identificação de 748 URLs únicas no teste de extensão;
+* coleta detalhada das primeiras 20 páginas;
+* coleta de 298 URLs únicas;
+* identificação de 296 vagas válidas;
+* validação estrutural da coleta ampliada;
+* preparação da base textual ampliada;
+* criação do campo `texto_analise`;
+* atualização do diário de coleta;
 * documentação dos scripts.
 
 ---
 
 ## Próximas etapas
 
-* resumir automaticamente a validação qualitativa;
-* identificar a última página válida da plataforma;
-* verificar duplicidades entre todas as páginas;
-* criar uma base processada somente com vagas válidas;
-* preparar os textos para análise;
-* criar o campo `texto_analise`;
-* definir as categorias finais;
-* elaborar o guia de rotulagem;
-* rotular manualmente uma amostra;
-* analisar a distribuição das categorias;
-* extrair competências;
-* avaliar a viabilidade de um modelo simples;
-* integrar posteriormente dados de egressos e currículo.
+* criar o guia de rotulagem das vagas;
+* definir formalmente as categorias;
+* selecionar uma amostra inicial para rotulagem manual;
+* analisar casos ambíguos;
+* avaliar a distribuição das categorias;
+* decidir se as categorias possuem exemplos suficientes;
+* extrair competências técnicas e comportamentais;
+* construir um dicionário de competências;
+* realizar análise exploratória;
+* testar uma classificação simples por regras;
+* avaliar posteriormente a viabilidade de um modelo supervisionado;
+* integrar dados de egressos;
+* analisar o PPC e a matriz curricular;
+* desenvolver indicadores e dashboard em Power BI.
